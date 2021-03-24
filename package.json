@@ -19,7 +19,7 @@
     "name": "Joseph Callaars"
   },
   "scripts": {
-    "release": "release-it",
+    "release": "npm run build; release-it",
     "build": "tsc"
   },
   "devDependencies": {
