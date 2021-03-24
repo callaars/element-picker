@@ -38,11 +38,7 @@ const reset = () => {
 const removeTargetStyle = () => {
   if (lastTarget) {
     Object.keys(applyStyle).forEach((key: any) => {
-      delete lastTarget?.style[key as any];
-
-      if (lastTargetStyle[key]) {
-        lastTarget!.style[key] = lastTargetStyle[key]!;
-      }
+      lastTarget!.style[key] = lastTargetStyle[key] || '';
     });
   }
 };
