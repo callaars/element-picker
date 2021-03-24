@@ -18,6 +18,10 @@ const reset = () => {
   const iframes = document.querySelectorAll('iframe');
 
   iframes.forEach((iframe) => {
+    if (iframe.contentDocument?.body) {
+      iframe.contentDocument.body.style.cursor = 'auto';
+    }
+
     iframe.contentDocument?.removeEventListener('click', onMouseClick, false);
     iframe.contentDocument?.removeEventListener(
       'mousemove',
@@ -80,8 +84,18 @@ const start = (options: StartOptions) => {
   const iframes = document.querySelectorAll('iframe');
 
   iframes.forEach((iframe) => {
-    iframe.contentDocument?.addEventListener('click', onMouseClick, false);
-    iframe.contentDocument?.addEventListener('mousemove', onMouseMove, false);
+    if (iframe.contentDocument) {
+      if (iframe.contentDocument?.body) {
+        iframe.contentDocument.body.style.cursor = 'pointer';
+      }
+
+      iframe.contentDocument?.addEventListener('click', onMouseClick, {
+        capture: true,
+      });
+      iframe.contentDocument?.addEventListener('mousemove', onMouseMove, {
+        capture: true,
+      });
+    }
   });
 };
 
