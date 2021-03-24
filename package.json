@@ -1,0 +1,52 @@
+{
+  "name": "@callaars/element-picker",
+  "version": "0.1.0",
+  "main": "lib/index.js",
+  "repository": {
+    "url": "https://github.com/callaars/element-picker"
+  },
+  "bugs": {
+    "url": "https://github.com/callaars/element-picker"
+  },
+  "keywords": [
+    "elements",
+    "picker",
+    "selector",
+    "dom"
+  ],
+  "author": {
+    "email": "joseph@callaa.rs",
+    "name": "Joseph Callaars"
+  },
+  "scripts": {
+    "release": "release-it",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "prettier": "^2.2.1",
+    "release-it": "*",
+    "typescript": "^4.2.3"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "prettier": {
+    "quoteProps": "consistent",
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "useTabs": false
+  },
+  "release-it": {
+    "npm": {
+      "publish": true
+    },
+    "git": {
+      "commitMessage": ":bookmark: release v${version}"
+    },
+    "github": {
+      "release": true
+    }
+  }
+}
