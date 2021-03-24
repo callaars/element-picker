@@ -1,6 +1,6 @@
 type StartOptions = {
   onClick: (element: Element) => void;
-  hoverStyle: any;
+  hoverStyle?: any;
 };
 
 let onClick = (_: any) => {};
@@ -73,13 +73,8 @@ const onMouseMove = (event: Event) => {
 const start = (options: StartOptions) => {
   reset();
 
-  if (options.onClick) {
-    onClick = options.onClick;
-  }
-
-  if (options.hoverStyle) {
-    applyStyle = {};
-  }
+  onClick = options.onClick;
+  applyStyle = options.hoverStyle || {};
 
   document.body.style.cursor = 'pointer';
 
