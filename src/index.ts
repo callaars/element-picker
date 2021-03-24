@@ -15,6 +15,17 @@ const reset = () => {
   document.removeEventListener('click', onMouseClick, false);
   document.removeEventListener('mousemove', onMouseClick, false);
 
+  const iframes = document.querySelectorAll('iframe');
+
+  iframes.forEach((iframe) => {
+    iframe.contentDocument?.removeEventListener('click', onMouseClick, false);
+    iframe.contentDocument?.removeEventListener(
+      'mousemove',
+      onMouseMove,
+      false
+    );
+  });
+
   removeTargetStyle();
 
   applyStyle = {};
@@ -74,6 +85,13 @@ const start = (options: StartOptions) => {
 
   document.addEventListener('click', onMouseClick, false);
   document.addEventListener('mousemove', onMouseMove, false);
+
+  const iframes = document.querySelectorAll('iframe');
+
+  iframes.forEach((iframe) => {
+    iframe.contentDocument?.addEventListener('click', onMouseClick, false);
+    iframe.contentDocument?.addEventListener('mousemove', onMouseMove, false);
+  });
 };
 
 export default { start };
