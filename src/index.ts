@@ -12,8 +12,8 @@ let lastTargetStyle: Partial<CSSStyleDeclaration> = {};
 const reset = () => {
   document.body.style.cursor = 'auto';
 
-  document.removeEventListener('click', onMouseClick, false);
-  document.removeEventListener('mousemove', onMouseClick, false);
+  document.removeEventListener('click', onMouseClick, true);
+  document.removeEventListener('mousemove', onMouseClick, true);
 
   const iframes = document.querySelectorAll('iframe');
 
@@ -22,12 +22,8 @@ const reset = () => {
       iframe.contentDocument.body.style.cursor = 'auto';
     }
 
-    iframe.contentDocument?.removeEventListener('click', onMouseClick, false);
-    iframe.contentDocument?.removeEventListener(
-      'mousemove',
-      onMouseMove,
-      false
-    );
+    iframe.contentDocument?.removeEventListener('click', onMouseClick, true);
+    iframe.contentDocument?.removeEventListener('mousemove', onMouseMove, true);
   });
 
   removeTargetStyle();
@@ -78,8 +74,8 @@ const start = (options: StartOptions) => {
 
   document.body.style.cursor = 'pointer';
 
-  document.addEventListener('click', onMouseClick, false);
-  document.addEventListener('mousemove', onMouseMove, false);
+  document.addEventListener('click', onMouseClick, true);
+  document.addEventListener('mousemove', onMouseMove, true);
 
   const iframes = document.querySelectorAll('iframe');
 
@@ -89,12 +85,8 @@ const start = (options: StartOptions) => {
         iframe.contentDocument.body.style.cursor = 'pointer';
       }
 
-      iframe.contentDocument?.addEventListener('click', onMouseClick, {
-        capture: true,
-      });
-      iframe.contentDocument?.addEventListener('mousemove', onMouseMove, {
-        capture: true,
-      });
+      iframe.contentDocument?.addEventListener('click', onMouseClick, true);
+      iframe.contentDocument?.addEventListener('mousemove', onMouseMove, true);
     }
   });
 };
