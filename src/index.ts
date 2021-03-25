@@ -13,7 +13,7 @@ const reset = () => {
   document.body.style.cursor = 'auto';
 
   document.removeEventListener('click', onMouseClick, true);
-  document.removeEventListener('mousemove', onMouseClick, true);
+  document.removeEventListener('mousemove', onMouseMove, true);
 
   const iframes = document.querySelectorAll('iframe');
 
