@@ -3,91 +3,232 @@ type StartOptions = {
   hoverStyle?: any;
 };
 
+type ElementSize = {
+  x: string;
+  y: string;
+  height: string;
+  width: string;
+};
+
+type DocumentAttached = {
+  window: Window;
+  document: DocumentExtended;
+  onMouseClick: (_: any) => void;
+  onMouseMove: (_: any) => void;
+  onScroll: (_: any) => void;
+};
+
+interface DocumentExtended extends Document {
+  __hoverId?: string;
+}
+
+let documentsAttached: DocumentAttached[] = [];
+
 let onClick = (_: any) => {};
 let applyStyle: Partial<CSSStyleDeclaration> = {};
 
 let lastTarget: HTMLElement | null = null;
-let lastTargetStyle: Partial<CSSStyleDeclaration> = {};
 
-const reset = () => {
-  document.body.style.cursor = 'auto';
+let currentHoverDocument: DocumentExtended | null;
+let lastHoverDocument: DocumentExtended | null;
 
-  document.removeEventListener('click', onMouseClick, true);
-  document.removeEventListener('mousemove', onMouseMove, true);
+const mousePosition = { x: 0, y: 0 };
 
-  const iframes = document.querySelectorAll('iframe');
+let tickRequest: number;
 
-  iframes.forEach((iframe) => {
-    if (iframe.contentDocument?.body) {
-      iframe.contentDocument.body.style.cursor = 'auto';
-    }
+let scrollPositions: { [iframe: string]: { x: number; y: number } } = {};
 
-    iframe.contentDocument?.removeEventListener('click', onMouseClick, true);
-    iframe.contentDocument?.removeEventListener('mousemove', onMouseMove, true);
-  });
+const getElementSize = (
+  offsetX: number,
+  offsetY: number,
+  element: HTMLElement
+): ElementSize => {
+  const vector = element.getBoundingClientRect();
 
-  removeTargetStyle();
-
-  applyStyle = {};
-  onClick = (_: any) => {};
-
-  lastTarget = null;
-  lastTargetStyle = {};
+  return {
+    x: `${offsetX + vector.left}px`,
+    y: `${offsetY + vector.top}px`,
+    height: `${element.offsetHeight}px`,
+    width: `${element.offsetWidth}px`,
+  };
 };
 
-const removeTargetStyle = () => {
-  if (lastTarget) {
-    Object.keys(applyStyle).forEach((key: any) => {
-      lastTarget!.style[key] = lastTargetStyle[key] || '';
-    });
+const reset = () => {
+  if (tickRequest) {
+    window.cancelAnimationFrame(tickRequest);
+  }
+
+  documentsAttached.forEach((props) => {
+    const {
+      onMouseClick,
+      onMouseMove,
+      document: doc,
+      window: win,
+      onScroll,
+    } = props;
+
+    doc.body.style.cursor = 'auto';
+
+    doc.__hoverId = undefined;
+    doc.removeEventListener('click', onMouseClick, true);
+    doc.removeEventListener('mousemove', onMouseMove, true);
+
+    removeTargetStyle(doc);
+
+    win.removeEventListener('scroll', onScroll, true);
+  });
+
+  documentsAttached = [];
+  onClick = (_: any) => {};
+  lastTarget = null;
+  currentHoverDocument = null;
+  lastHoverDocument = null;
+  scrollPositions = {};
+};
+
+const removeTargetStyle = (doc: DocumentExtended) => {
+  const hoverBox = doc.getElementById('hoverbox');
+
+  try {
+    hoverBox?.remove();
+  } catch (error) {
+    console.warn('Document error', error, doc, hoverBox);
   }
 };
 
-const applyTargetStyle = (target: any) => {
-  Object.keys(applyStyle).forEach((key: any) => {
-    lastTargetStyle[key] = target.style[key];
-    target.style[key] = applyStyle[key];
-  });
+const hideTargetStyle = (doc: DocumentExtended) => {
+  let hoverBox = doc.getElementById('hoverbox');
+
+  if (!hoverBox) {
+    return;
+  }
+
+  hoverBox.style.pointerEvents = 'none';
 };
 
-const onMouseClick = (event: Event) => {
+const applyTargetStyle = (doc: DocumentExtended, target: HTMLElement) => {
+  let hoverBox = doc.getElementById('hoverbox');
+
+  if (!hoverBox) {
+    const div = doc.createElement('div');
+
+    div.id = 'hoverbox';
+    div.style.border = '2px solid orange';
+    div.style.position = 'absolute';
+    div.style.zIndex = '100';
+
+    doc.body.appendChild(div);
+
+    hoverBox = doc.getElementById('hoverbox');
+  }
+
+  const { x = 0, y = 0 } = scrollPositions[doc.__hoverId!] || {};
+
+  const size = getElementSize(x, y, target);
+
+  hoverBox!.style.pointerEvents = 'auto';
+  hoverBox!.style.top = size.y;
+  hoverBox!.style.left = size.x;
+  hoverBox!.style.width = size.width;
+  hoverBox!.style.height = size.height;
+};
+
+const onMouseClick = (event: MouseEvent) => {
   event.preventDefault && event.preventDefault();
   event.stopPropagation && event.stopPropagation();
 
-  onClick(event.target);
+  onClick(lastTarget);
+
   reset();
 };
 
-const onMouseMove = (event: Event) => {
-  removeTargetStyle();
+const onMouseMove = (doc: DocumentExtended) => (event: MouseEvent) => {
+  lastHoverDocument = currentHoverDocument;
+  currentHoverDocument = doc;
 
-  lastTarget = event.target as HTMLElement;
+  mousePosition.x = event.x;
+  mousePosition.y = event.y;
+};
 
-  applyTargetStyle(lastTarget);
+const onScroll = (win: Window, index: string) => () => {
+  scrollPositions[index] = {
+    x: win.scrollX,
+    y: win.scrollY,
+  };
+};
+
+const tick = () => {
+  if (currentHoverDocument) {
+    if (
+      lastHoverDocument &&
+      lastHoverDocument.__hoverId !== currentHoverDocument.__hoverId
+    ) {
+      removeTargetStyle(lastHoverDocument);
+    }
+
+    hideTargetStyle(currentHoverDocument);
+
+    const freshTarget = currentHoverDocument.elementFromPoint(
+      mousePosition.x,
+      mousePosition.y
+    ) as HTMLElement;
+
+    if (freshTarget) {
+      lastTarget = freshTarget;
+      applyTargetStyle(currentHoverDocument, lastTarget);
+    }
+  }
+
+  tickRequest = window.requestAnimationFrame(tick);
 };
 
 const start = (options: StartOptions) => {
-  reset();
-
   onClick = options.onClick;
   applyStyle = options.hoverStyle || {};
 
-  document.body.style.cursor = 'pointer';
+  (document as DocumentExtended).__hoverId = `doc-${0}`;
 
-  document.addEventListener('click', onMouseClick, true);
-  document.addEventListener('mousemove', onMouseMove, true);
+  const documentWindows: { win: Window; doc: DocumentExtended }[] = [
+    { doc: document as DocumentExtended, win: window },
+  ];
 
-  const iframes = document.querySelectorAll('iframe');
-
-  iframes.forEach((iframe) => {
+  document.querySelectorAll('iframe').forEach((iframe, index) => {
     if (iframe.contentDocument) {
-      if (iframe.contentDocument?.body) {
-        iframe.contentDocument.body.style.cursor = 'pointer';
-      }
+      (iframe.contentDocument as DocumentExtended).__hoverId = `doc-${index}`;
 
-      iframe.contentDocument?.addEventListener('click', onMouseClick, true);
-      iframe.contentDocument?.addEventListener('mousemove', onMouseMove, true);
+      documentWindows.push({
+        doc: iframe.contentDocument as DocumentExtended,
+        win: iframe.contentWindow!,
+      });
     }
+  });
+
+  documentWindows.forEach(({ doc, win }) => {
+    doc.body.style.cursor = 'pointer';
+
+    const eventMouseClick = onMouseClick;
+    const eventMouseMove = onMouseMove(doc);
+    const eventOnScroll = onScroll(win, doc.__hoverId!);
+
+    documentsAttached.push({
+      window: win,
+      onScroll: eventOnScroll,
+      onMouseMove: eventMouseMove,
+      onMouseClick: eventMouseClick,
+      document: doc,
+    });
+
+    doc.addEventListener('click', eventMouseClick, true);
+    doc.addEventListener('mousemove', eventMouseMove, true);
+
+    win.addEventListener('scroll', eventOnScroll, true);
+
+    scrollPositions[doc.__hoverId!] = {
+      x: win.scrollX,
+      y: win.scrollY,
+    };
+
+    tick();
   });
 };
 
