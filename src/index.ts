@@ -1,5 +1,6 @@
 type StartOptions = {
   onClick: (element: Element) => void;
+  ignore?: (element: Element) => boolean;
   hoverStyle?: any;
 };
 
@@ -18,6 +19,8 @@ type DocumentAttached = {
   onScroll: (_: any) => void;
 };
 
+type IgnoreFunction = null | ((element: Element) => boolean);
+
 interface DocumentExtended extends Document {
   __hoverId?: string;
 }
@@ -26,6 +29,7 @@ let documentsAttached: DocumentAttached[] = [];
 
 let onClick = (_: any) => {};
 let applyStyle: Partial<CSSStyleDeclaration> = {};
+let igoreFilter: IgnoreFunction = null;
 
 let lastTarget: HTMLElement | null = null;
 
@@ -173,7 +177,7 @@ const tick = () => {
       mousePosition.y
     ) as HTMLElement;
 
-    if (freshTarget) {
+    if (freshTarget && (!igoreFilter || !igoreFilter(freshTarget))) {
       lastTarget = freshTarget;
       applyTargetStyle(currentHoverDocument, lastTarget);
     }
@@ -185,6 +189,7 @@ const tick = () => {
 const start = (options: StartOptions) => {
   onClick = options.onClick;
   applyStyle = options.hoverStyle || {};
+  igoreFilter = options.ignore || null;
 
   (document as DocumentExtended).__hoverId = `doc-${0}`;
 
