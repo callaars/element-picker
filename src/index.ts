@@ -1,3 +1,5 @@
+type DocumentWindows = { win: Window; doc: DocumentExtended }[];
+
 type StartOptions = {
   onClick: (element: Element) => void;
   ignore?: (element: Element) => boolean;
@@ -186,18 +188,8 @@ const tick = () => {
   tickRequest = window.requestAnimationFrame(tick);
 };
 
-const start = (options: StartOptions) => {
-  onClick = options.onClick;
-  applyStyle = options.hoverStyle || {};
-  igoreFilter = options.ignore || null;
-
-  (document as DocumentExtended).__hoverId = `doc-${0}`;
-
-  const documentWindows: { win: Window; doc: DocumentExtended }[] = [
-    { doc: document as DocumentExtended, win: window },
-  ];
-
-  document.querySelectorAll('iframe').forEach((iframe, index) => {
+const parseFrames = (doc: Document, documentWindows: DocumentWindows) => {
+  doc.querySelectorAll('iframe').forEach((iframe, index) => {
     if (iframe.contentDocument) {
       (iframe.contentDocument as DocumentExtended).__hoverId = `doc-${index}`;
 
@@ -205,10 +197,12 @@ const start = (options: StartOptions) => {
         doc: iframe.contentDocument as DocumentExtended,
         win: iframe.contentWindow!,
       });
+
+      parseFrames(iframe.contentDocument, documentWindows);
     }
   });
 
-  document.querySelectorAll('frame').forEach((frame, index) => {
+  doc.querySelectorAll('frame').forEach((frame, index) => {
     if (frame.contentDocument) {
       (frame.contentDocument as DocumentExtended).__hoverId = `doc-${index}`;
 
@@ -216,8 +210,24 @@ const start = (options: StartOptions) => {
         doc: frame.contentDocument as DocumentExtended,
         win: frame.contentWindow!,
       });
+
+      parseFrames(frame.contentDocument, documentWindows);
     }
   });
+};
+
+const start = (options: StartOptions) => {
+  onClick = options.onClick;
+  applyStyle = options.hoverStyle || {};
+  igoreFilter = options.ignore || null;
+
+  (document as DocumentExtended).__hoverId = `doc-${0}`;
+
+  const documentWindows: DocumentWindows = [
+    { doc: document as DocumentExtended, win: window },
+  ];
+
+  parseFrames(document, documentWindows);
 
   documentWindows.forEach(({ doc, win }) => {
     doc.body.style.cursor = 'pointer';
