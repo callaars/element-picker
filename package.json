@@ -1,6 +1,6 @@
 {
   "name": "@callaars/element-picker",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "main": "lib/index.js",
   "repository": {
     "url": "https://github.com/callaars/element-picker"
