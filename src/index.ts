@@ -208,6 +208,17 @@ const start = (options: StartOptions) => {
     }
   });
 
+  document.querySelectorAll('frame').forEach((frame, index) => {
+    if (frame.contentDocument) {
+      (frame.contentDocument as DocumentExtended).__hoverId = `doc-${index}`;
+
+      documentWindows.push({
+        doc: frame.contentDocument as DocumentExtended,
+        win: frame.contentWindow!,
+      });
+    }
+  });
+
   documentWindows.forEach(({ doc, win }) => {
     doc.body.style.cursor = 'pointer';
 
